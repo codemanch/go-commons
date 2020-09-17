@@ -60,32 +60,30 @@ type PackageConfig struct {
 
 //WriterConfig struct
 type WriterConfig struct {
-	//Name of the writer
-	Name string `json:"name" yaml:"name"`
 	//File reference. Non mandatory but one of file or console logger is required.
-	File *FileConfig `json:"file,omitempty" yaml:"fileWriter,omitempty"`
+	File *FileConfig `json:"file,omitempty" yaml:"file,omitempty"`
 	//Console reference
-	Console *ConsoleConfig `json:"console,omitempty" yaml:"consoleWriter,omitempty"`
+	Console *ConsoleConfig `json:"console,omitempty" yaml:"console,omitempty"`
 }
 
 //FileConfig - Configuration of file based logging
 type FileConfig struct {
 	//FilePath for the file based log writer
-	DefaultPath string `json:"defaultPath" yaml:"filePath"`
-	ErrorPath   string `json:"errorPath" yaml:"filePath"`
-	WarnPath    string `json:"warnPath" yaml:"filePath"`
-	InfoPath    string `json:"infoPath" yaml:"filePath"`
-	DebugPath   string `json:"debugPath" yaml:"filePath"`
-	TracePath   string `json:"tracePath" yaml:"filePath"`
+	DefaultPath string `json:"defaultPath" yaml:"defaultPath"`
+	ErrorPath   string `json:"errorPath" yaml:"errorPath"`
+	WarnPath    string `json:"warnPath" yaml:"warnPath"`
+	InfoPath    string `json:"infoPath" yaml:"infoPath"`
+	DebugPath   string `json:"debugPath" yaml:"debugPath"`
+	TracePath   string `json:"tracePath" yaml:"tracePath"`
 }
 
 // ConsoleConfig - Configuration of console based logging. All Log Levels except ERROR and WARN are written to os.Stdout
 // The ERROR and WARN log levels can be written  to os.Stdout or os.Stderr, By default they go to os.Stderr
 type ConsoleConfig struct {
 	//WriteErrToStdOut write error messages to os.Stdout .
-	WriteErrToStdOut bool `json:"errToStdOut" yaml:"useStdOut"`
+	WriteErrToStdOut bool `json:"errToStdOut" yaml:"errToStdOut"`
 	//WriteWarnToStdOut write warn messages to os.Stdout .
-	WriteWarnToStdOut bool `json:"warnToStdOut" yaml:"useStdErr"`
+	WriteWarnToStdOut bool `json:"warnToStdOut" yaml:"warnToStdOut"`
 }
 
 type LogMessage struct {
@@ -292,7 +290,7 @@ func writeLogMsg(writer io.Writer, logMsg *LogMessage) {
 	if logConfig.Format == "json" {
 		data, _ := json.Marshal(logMsg)
 		//TODO check if there is a better way
-		writer.Write(data)
+		_, _ = writer.Write(data)
 		writeLog(writer, "")
 	} else if logConfig.Format == "text" {
 		if logMsg.FnName != textutils.EmptyStr {

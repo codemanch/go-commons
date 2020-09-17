@@ -24,4 +24,4 @@ Go Commons is a collection of reusable common utilities.
 
 
 ## License
-This project is licened under Apache License 2.0. A copy of the license can be found on in  [repository](../master/LICENSE) or alternatively you can check [here](https://www.apache.org/licenses/LICENSE-2.0)
+This project is licened under Apache License 2.0. A copy of the license can be found on in  [repository](./LICENSE) or alternatively you can check [here](https://www.apache.org/licenses/LICENSE-2.0)

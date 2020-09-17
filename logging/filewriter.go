@@ -7,12 +7,12 @@ import (
 )
 
 type FileWriter struct {
-	errorWriter, warnWriter, infoWriter, debugWriter, traceWriter io.Writer
+	errorWriter, warnWriter, infoWriter, debugWriter, traceWriter io.WriteCloser
 }
 
 func (fw *FileWriter) InitConfig(w *WriterConfig) {
 
-	var defaultWriter io.Writer
+	var defaultWriter io.WriteCloser
 	if w.File.DefaultPath != textutils.EmptyStr {
 		defaultWriter, _ = os.OpenFile(w.File.DefaultPath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0644)
 	}
@@ -76,5 +76,5 @@ func (fw *FileWriter) DoLog(logMsg *LogMessage) {
 }
 
 func (fw *FileWriter) Close() error {
-	return nil
+	return fw.debugWriter.Close()
 }
