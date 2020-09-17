@@ -165,7 +165,10 @@ const (
 )
 
 func init() {
-	logConfig = loadConfig()
+	Configure(loadConfig())
+}
+
+func Configure(logConfig *LogConfig) {
 	if logConfig.DatePattern == "" {
 		logConfig.DatePattern = time.RFC3339
 	}
@@ -211,7 +214,7 @@ func loadDefaultConfig() *LogConfig {
 
 	return &LogConfig{
 		Format:      "text",
-		Async:       true,
+		Async:       false,
 		DatePattern: time.RFC3339,
 		DefaultLvl:  Levels[InfoLvl],
 		Writers: []*WriterConfig{
