@@ -5,9 +5,9 @@ Go Commons is a collection of reusable common utilities.
 # Goals
 
 * Create reusable common collection of utilities targeting enterprise usecases
-* Ensure the project is self contained and minimise external dependencies.
+* Ensure the project is self-contained and minimise external dependencies.
 
-## Utilities Completed
+## Utilities WIP
 * Logging 
 
 
@@ -18,10 +18,20 @@ Go Commons is a collection of reusable common utilities.
 * YAML codec support with validation
 * JSON Codec support with validation
 * HTTP Sessions Support
-* Configuration management with support for
-    * JSON format
-    * YAML format
+
 
 
 ## License
-This project is licened under Apache License 2.0. A copy of the license can be found on in  [repository](../master/LICENSE) or alternatively you can check [here](https://www.apache.org/licenses/LICENSE-2.0)
+Copyright (c) 2020 Appmanch Pty Ltd .
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
