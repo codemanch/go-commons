@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/appmanch/go-commons/fsutils"
@@ -125,6 +126,8 @@ var logConfig *LogConfig
 //channel of type log message
 var logMsgChannel chan *LogMessage
 
+var mutex = &sync.Mutex{}
+
 //Levels of the logging by severity
 var Levels = [...]string{
 	"OFF",
@@ -169,6 +172,8 @@ func init() {
 }
 
 func Configure(l *LogConfig) {
+	mutex.Lock()
+	defer mutex.Unlock()
 	logConfig = l
 	if l.DatePattern == "" {
 		l.DatePattern = time.RFC3339
@@ -260,6 +265,8 @@ func loadConfig() *LogConfig {
 
 //GetLogger function will return the logger for that package
 func GetLogger() *Logger {
+	mutex.Lock()
+	defer mutex.Unlock()
 	pc, _, _, _ := runtime.Caller(1)
 	details := runtime.FuncForPC(pc)
 	fnNameSplit := strings.Split(details.Name(), "/")
@@ -287,6 +294,7 @@ func GetLogger() *Logger {
 	}
 	_ = logger.updateLvlFlags()
 	loggers[pkgName] = logger
+
 	return logger
 }
 
