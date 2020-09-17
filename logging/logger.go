@@ -168,20 +168,21 @@ func init() {
 	Configure(loadConfig())
 }
 
-func Configure(logConfig *LogConfig) {
-	if logConfig.DatePattern == "" {
-		logConfig.DatePattern = time.RFC3339
+func Configure(l *LogConfig) {
+	logConfig = l
+	if l.DatePattern == "" {
+		l.DatePattern = time.RFC3339
 	}
-	if logConfig.Async {
+	if l.Async {
 
-		if logConfig.QueueSize == 0 {
-			logConfig.QueueSize = 512
+		if l.QueueSize == 0 {
+			l.QueueSize = 512
 		}
-		logMsgChannel = make(chan *LogMessage, logConfig.QueueSize)
+		logMsgChannel = make(chan *LogMessage, l.QueueSize)
 		go doAsyncLog()
 	}
-	if logConfig.Writers != nil {
-		for _, w := range logConfig.Writers {
+	if l.Writers != nil {
+		for _, w := range l.Writers {
 			if w.File != nil {
 				fw := &FileWriter{}
 				fw.InitConfig(w)
