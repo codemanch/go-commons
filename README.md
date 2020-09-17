@@ -1,20 +1,26 @@
 # go-commons
 
-Golang commons is a collection of reusable common utilities. 
+Go Commons is a collection of reusable common utilities.
 
 # Goals
 
-* Create reusable common collection of utilites 
+* Create reusable common collection of utilities targeting enterprise usecases
 * Ensure the project is self contained and minimise external dependencies.
-* Identify and provide a broad scope.
 
-## Current Set of utilties in pipeline
-
+## Utilities Completed
 * Logging 
+
+
+## Current Set of utilities in pipeline
+
 * HTTP Router
 * HTTP Authentication
-* HTTP 
-* YAML codec support
+* YAML codec support with validation
+* JSON Codec support with validation
+* HTTP Sessions Support
+* Configuration management with support for
+    * JSON format
+    * YAML format
 
 
 ## License
