@@ -8,17 +8,15 @@ Go Commons is a collection of reusable common utilities.
 * Ensure the project is self-contained and minimise external dependencies.
 
 ## Utilities WIP
-* Logging 
+*  [Logging](logging/LOGGING.md) 
 
 
 ## Current Set of utilities in pipeline
 
-* HTTP Router
-* HTTP Authentication
 * YAML codec support with validation
 * JSON Codec support with validation
-* HTTP Sessions Support
-
+* Properties Support
+* Environment Var Support
 
 
 ## License
