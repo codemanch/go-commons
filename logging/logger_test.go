@@ -9,8 +9,8 @@ var logger *Logger
 var loggerTests = []struct {
 	val string
 }{
-	{"12345"},
 	{"testing"},
+	{"12345"},
 	{"\xff\xf0\x0f\xff"},
 	{""},
 	{"\""},
