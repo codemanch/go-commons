@@ -274,7 +274,7 @@ func loadConfig() *LogConfig {
 	return logConfig
 }
 
-//GetLogger function will return the logger for that package
+//GetLogger function will return the logger object for that package
 func GetLogger() *Logger {
 	mutex.Lock()
 	defer mutex.Unlock()

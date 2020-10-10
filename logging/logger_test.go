@@ -1,100 +1,168 @@
 package logging
 
 import (
+	"reflect"
 	"testing"
 )
 
-var logger *Logger
-
-var loggerTests = []struct {
-	val string
-}{
-	{"testing"},
-	{"12345"},
-	{"\xff\xf0\x0f\xff"},
-	{""},
-	{"\""},
-	{`\n`},
-	{"\n"},
-	{"日本語"},
-	{"☺"},
-	{"⌘"},
-	{"\U0010ffff"},
-}
-
 // TestGetLogger --> Testing Logger object creation
 func TestGetLogger(t *testing.T) {
-	logger = GetLogger()
-	if logger == nil {
-		t.Errorf("Logger Object Test Fail!")
+	tests := []struct {
+		name string
+		want *Logger
+	}{
+		{
+			name: "Logger",
+			want: GetLogger(),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := GetLogger(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetLogger() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
 
-func TestInfo(t *testing.T) {
-	for _, tt := range loggerTests {
-		logger.Info(tt.val)
+func TestLogger_IsEnabled(t *testing.T) {
+	type fields struct {
+		sev             Severity
+		pkgName         string
+		errorEnabled    bool
+		warnEnabled     bool
+		infoEnabled     bool
+		debugEnabled    bool
+		traceEnabled    bool
+		includeFunction bool
+		includeLine     bool
 	}
-}
-
-// TestGetLogger --> Testing InfoF
-func TestInfoF(t *testing.T) {
-	for _, tt := range loggerTests {
-		logger.InfoF(tt.val)
+	type args struct {
+		sev Severity
 	}
-}
-
-// TestGetLogger --> Testing Debug
-func TestDebug(t *testing.T) {
-	for _, tt := range loggerTests {
-		logger.Debug(tt.val)
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		// TODO: Add test cases.
+		{
+			name: "WarnTest_true",
+			fields: fields{
+				sev : WarnLvl,
+				warnEnabled: true,
+			},
+			args: args{
+				sev: WarnLvl,
+			},
+			want: true,
+		},
+		{
+			name: "WarnTest_Fail",
+			fields: fields{
+				sev : InfoLvl,
+				infoEnabled: true,
+			},
+			args: args{
+				sev: WarnLvl,
+			},
+			want: false,
+		},
+		{
+			name: "ErrorTest",
+			fields: fields{
+				sev : ErrLvl,
+				errorEnabled: true,
+			},
+			args: args{
+				sev: ErrLvl,
+			},
+			want: true,
+		},
+		{
+			name: "ErrorTest_Fail",
+			fields: fields{
+				sev : TraceLvl,
+				traceEnabled: true,
+			},
+			args: args{
+				sev: ErrLvl,
+			},
+			want: false,
+		},
+		{
+			name: "InfoTest",
+			fields: fields{
+				sev : InfoLvl,
+				infoEnabled: true,
+			},
+			args: args{
+				sev: InfoLvl,
+			},
+			want: true,
+		},
+		{
+			name: "InfoTest_Fail",
+			fields: fields{
+				sev : TraceLvl,
+				traceEnabled: true,
+			},
+			args: args{
+				sev: InfoLvl,
+			},
+			want: false,
+		},
+		{
+			name: "DebugTest",
+			fields: fields{
+				sev : DebugLvl,
+				warnEnabled: true,
+			},
+			args: args{
+				sev: DebugLvl,
+			},
+			want: true,
+		},
+		{
+			name: "DebugTest_Fail",
+			fields: fields{
+				sev : TraceLvl,
+				traceEnabled: true,
+			},
+			args: args{
+				sev: DebugLvl,
+			},
+			want: false,
+		},
+		{
+			name: "TraceTest",
+			fields: fields{
+				sev : TraceLvl,
+				warnEnabled: true,
+			},
+			args: args{
+				sev: TraceLvl,
+			},
+			want: true,
+		},
 	}
-}
-
-// TestGetLogger --> Testing DebugF
-func TestDebugF(t *testing.T) {
-	for _, tt := range loggerTests {
-		logger.DebugF(tt.val)
-	}
-}
-
-// TestGetLogger --> Testing Trace
-func TestTrace(t *testing.T) {
-	for _, tt := range loggerTests {
-		logger.Trace(tt.val)
-	}
-}
-
-// TestGetLogger --> Testing TraceF
-func TestTraceF(t *testing.T) {
-	for _, tt := range loggerTests {
-		logger.TraceF(tt.val)
-	}
-}
-
-// TestGetLogger --> Testing Warn
-func TestWarn(t *testing.T) {
-	for _, tt := range loggerTests {
-		logger.Warn(tt.val)
-	}
-}
-
-// TestGetLogger --> Testing WarnF
-func TestWarnF(t *testing.T) {
-	for _, tt := range loggerTests {
-		logger.WarnF(tt.val)
-	}
-}
-
-// TestGetLogger --> Testing Error
-func TestError(t *testing.T) {
-	for _, tt := range loggerTests {
-		logger.Error(tt.val)
-	}
-}
-
-// TestGetLogger --> Testing ErrorF
-func TestErrorF(t *testing.T) {
-	for _, tt := range loggerTests {
-		logger.ErrorF(tt.val)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := &Logger{
+				sev:             tt.fields.sev,
+				pkgName:         tt.fields.pkgName,
+				errorEnabled:    tt.fields.errorEnabled,
+				warnEnabled:     tt.fields.warnEnabled,
+				infoEnabled:     tt.fields.infoEnabled,
+				debugEnabled:    tt.fields.debugEnabled,
+				traceEnabled:    tt.fields.traceEnabled,
+				includeFunction: tt.fields.includeFunction,
+				includeLine:     tt.fields.includeLine,
+			}
+			if got := l.IsEnabled(tt.args.sev); got != tt.want {
+				t.Errorf("IsEnabled() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
