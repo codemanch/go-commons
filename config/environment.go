@@ -1,4 +1,4 @@
-package misc
+package config
 
 //This program contains utility functions related to environment variables
 import (
@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-//GetEnvAsString function will fecth the value from environment variable.
+//GetEnvAsString function will fetch the value from environment variable.
 //If the value is absent then it will return defaultVal supplied.
 func GetEnvAsString(key, defaultVal string) string {
 	if value, ok := os.LookupEnv(key); ok {

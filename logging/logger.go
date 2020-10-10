@@ -13,10 +13,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/appmanch/go-commons/config"
 	"github.com/appmanch/go-commons/textutils"
 
 	"github.com/appmanch/go-commons/fsutils"
-	"github.com/appmanch/go-commons/misc"
 )
 
 //Severity of the logging levels
@@ -91,7 +91,7 @@ type ConsoleConfig struct {
 // LogMessage struct.
 type LogMessage struct {
 	Time   time.Time `json:"timestamp"`
-	FnName string    `json:"function,omitempty" `
+	FnName string    `json:"function,omitempty"`
 	Line   int       `json:"line,omitempty"`
 	Msg    string    `json:"msg"`
 	Sev    Severity  `json:"sev"`
@@ -221,15 +221,22 @@ func (l *Logger) updateLvlFlags() error {
 
 //loadDefaultConfig function with load the default configuration
 func loadDefaultConfig() *LogConfig {
+	isAsync, _ := config.GetEnvAsBool("GC_L_DEF_FMT", false)
+	errToStdOut, _ := config.GetEnvAsBool("GC_L_ERR_STDOUT", false)
+	warnToStdOut, _ := config.GetEnvAsBool("GC_L_WRN_STDOUT", false)
 
 	return &LogConfig{
-		Format:      "text",
-		Async:       false,
-		DatePattern: time.RFC3339,
-		DefaultLvl:  Levels[InfoLvl],
+		Format:      config.GetEnvAsString("GC_L_DEF_FMT", "text"),
+		Async:       isAsync,
+		DatePattern: config.GetEnvAsString("GC_L_DEF_FMT", time.RFC3339),
+		DefaultLvl:  config.GetEnvAsString("GC_L_DEF_LEVEL", "INFO"),
 		Writers: []*WriterConfig{
 			{
-				Console: &ConsoleConfig{},
+				Console: &ConsoleConfig{
+
+					WriteErrToStdOut:  errToStdOut,
+					WriteWarnToStdOut: warnToStdOut,
+				},
 			},
 		},
 	}
@@ -238,7 +245,7 @@ func loadDefaultConfig() *LogConfig {
 //loadConfig function will load the log configuration.
 func loadConfig() *LogConfig {
 	var logConfig = &LogConfig{}
-	fileName := misc.GetEnvAsString(LogConfigEnvProperty, DefaultlogFilePath)
+	fileName := config.GetEnvAsString(LogConfigEnvProperty, DefaultlogFilePath)
 	if fsutils.FileExists(fileName) {
 		contentType := fsutils.LookupContentType(fileName)
 		if contentType == "application/json" {
