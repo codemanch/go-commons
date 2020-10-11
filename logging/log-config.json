@@ -1,0 +1,14 @@
+{
+  "format": "text",
+  "async": false,
+  "defaultLvl": "INFO",
+  "writers": [
+    {
+      "name": "conosleLog",
+      "console": {
+        "errToStdOut": true,
+        "warnToStdOut": true
+      }
+    }
+  ]
+}

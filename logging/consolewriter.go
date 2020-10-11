@@ -5,10 +5,12 @@ import (
 	"os"
 )
 
+// ConsoleWriter struct
 type ConsoleWriter struct {
 	errorWriter, warnWriter, infoWriter, debugWriter, traceWriter io.Writer
 }
 
+// InitConfig Consolewriter
 func (cw *ConsoleWriter) InitConfig(w *WriterConfig) {
 	if w.Console.WriteErrToStdOut {
 		cw.errorWriter = os.Stdout
@@ -27,6 +29,7 @@ func (cw *ConsoleWriter) InitConfig(w *WriterConfig) {
 
 }
 
+// DoLog consolewriter
 func (cw *ConsoleWriter) DoLog(logMsg *LogMessage) {
 	var writer io.Writer
 
@@ -48,6 +51,8 @@ func (cw *ConsoleWriter) DoLog(logMsg *LogMessage) {
 		writeLogMsg(writer, logMsg)
 	}
 }
+
+// Close close consolewriter
 func (cw *ConsoleWriter) Close() error {
 	return nil
 }

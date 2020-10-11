@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/appmanch/go-commons/config"
-	"github.com/appmanch/go-commons/textutils"
 	"io"
 	"io/ioutil"
 	"os"
@@ -14,6 +12,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/appmanch/go-commons/config"
+	"github.com/appmanch/go-commons/textutils"
 
 	"github.com/appmanch/go-commons/fsutils"
 )
@@ -87,6 +88,7 @@ type ConsoleConfig struct {
 	WriteWarnToStdOut bool `json:"warnToStdOut" yaml:"warnToStdOut"`
 }
 
+// LogMessage struct.
 type LogMessage struct {
 	Time   time.Time `json:"timestamp"`
 	FnName string    `json:"function,omitempty"`
@@ -108,6 +110,7 @@ type Logger struct {
 	includeLine     bool
 }
 
+// LogWriter interface
 type LogWriter interface {
 	InitConfig(w *WriterConfig)
 	DoLog(logMsg *LogMessage)
@@ -171,6 +174,7 @@ func init() {
 	Configure(loadConfig())
 }
 
+// Configure Logging
 func Configure(l *LogConfig) {
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -270,7 +274,7 @@ func loadConfig() *LogConfig {
 	return logConfig
 }
 
-//GetLogger function will return the logger for that package
+//GetLogger function will return the logger object for that package
 func GetLogger() *Logger {
 	mutex.Lock()
 	defer mutex.Unlock()

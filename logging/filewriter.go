@@ -1,15 +1,18 @@
 package logging
 
 import (
-	"github.com/appmanch/go-commons/textutils"
 	"io"
 	"os"
+
+	"github.com/appmanch/go-commons/textutils"
 )
 
+// FileWriter struct
 type FileWriter struct {
 	errorWriter, warnWriter, infoWriter, debugWriter, traceWriter io.WriteCloser
 }
 
+// InitConfig Filewriter
 func (fw *FileWriter) InitConfig(w *WriterConfig) {
 
 	var defaultWriter io.WriteCloser
@@ -52,6 +55,7 @@ func (fw *FileWriter) InitConfig(w *WriterConfig) {
 	}
 }
 
+// DoLog FileWriter
 func (fw *FileWriter) DoLog(logMsg *LogMessage) {
 	var writer io.Writer
 
@@ -75,6 +79,7 @@ func (fw *FileWriter) DoLog(logMsg *LogMessage) {
 	}
 }
 
+// Close stream
 func (fw *FileWriter) Close() error {
 	return fw.debugWriter.Close()
 }
