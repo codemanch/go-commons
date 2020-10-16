@@ -9,13 +9,13 @@ import (
 
 // FileWriter struct
 type FileWriter struct {
-	errorWriter, warnWriter, infoWriter, debugWriter, traceWriter io.WriteCloser
+	errorWriter, warnWriter, infoWriter, debugWriter, traceWriter *os.File
 }
 
 // InitConfig Filewriter
 func (fw *FileWriter) InitConfig(w *WriterConfig) {
 
-	var defaultWriter io.WriteCloser
+	var defaultWriter *os.File
 	if w.File.DefaultPath != textutils.EmptyStr {
 		defaultWriter, _ = os.OpenFile(w.File.DefaultPath, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0644)
 	}
@@ -58,10 +58,9 @@ func (fw *FileWriter) InitConfig(w *WriterConfig) {
 // DoLog FileWriter
 func (fw *FileWriter) DoLog(logMsg *LogMessage) {
 	var writer io.Writer
-
 	switch logMsg.Sev {
 	case Off:
-		break
+		return
 	case ErrLvl:
 		writer = fw.errorWriter
 	case WarnLvl:

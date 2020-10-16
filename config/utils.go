@@ -2,6 +2,7 @@ package config
 
 import "io"
 
+// Configuration is an interface that wraps the  methods for a standard configuration.
 type Configuration interface {
 
 	//ReadFrom a reader from Reader

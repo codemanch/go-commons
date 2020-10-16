@@ -25,7 +25,7 @@ func GetEnvAsInt(key string, defaultVal int) (int, error) {
 	return defaultVal, nil
 }
 
-//GetEnvAsInt64 function will fecth the value from environment variable and convert that to an integer of 64 bit.
+//GetEnvAsInt64 function will fetch the value from environment variable and convert that to an integer of 64 bit.
 //If the value is absent then it will return defaultVal supplied.
 func GetEnvAsInt64(key string, defaultVal int64) (int64, error) {
 	if value, ok := os.LookupEnv(key); ok {

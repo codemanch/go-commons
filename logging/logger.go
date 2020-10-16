@@ -22,81 +22,6 @@ import (
 //Severity of the logging levels
 type Severity int
 
-//LogConfig - Configuration & Settings for the logger.
-type LogConfig struct {
-
-	//Format of the log. valid values are text,json
-	//Default is text
-	Format string `json:"format,omitempty" yaml:"format,omitempty"`
-	//Async Flag to indicate if the writing of the flag is asynchronous.
-	//Default value is false
-	Async bool `json:"async,omitempty" yaml:"async,omitempty"`
-	//QueueSize to indicate the number log routines that can be queued  to use in background
-	//This value is used only if the async value is set to true.
-	//Default value for the number items to be in queue 512
-	QueueSize int `json:"queueSize,omitempty" yaml:"numRoutines,omitempty"`
-	//Date - Defaults to  time.RFC3339 pattern
-	DatePattern string `json:"datePattern,omitempty" yaml:"datePattern,omitempty"`
-	//IncludeFunction will include the calling function name  in the log entries
-	//Default value : false
-	IncludeFunction bool `json:"includeFunction,omitempty" yaml:"includeFunction,omitempty"`
-	//IncludeLineNum ,includes Line number for the log file
-	//If IncludeFunction Line is set to false this config is ignored
-	IncludeLineNum bool `json:"includeLineNum,omitempty" yaml:"includeLineNum,omitempty"`
-	//DefaultLvl that will be used as default
-	DefaultLvl string `json:"defaultLvl" yaml:"defaultLvl"`
-	//PackageConfig that can be used to
-	PkgConfigs []*PackageConfig `json:"pkgConfigs" yaml:"pkgConfigs"`
-	//Writers writers for the logger. Need one for all levels
-	//If a writer is not found for a specific level it will fallback to os.Stdout if the level is greater then Warn and os.Stderr otherwise
-	Writers []*WriterConfig `json:"writers" yaml:"writers"`
-}
-
-// PackageConfig configuration
-type PackageConfig struct {
-	//PackageName
-	PackageName string `json:"pkgName" yaml:"pkgName"`
-	//Level to be set valid values : OFF,ERROR,WARN,INFO,DEBUG,TRACE
-	Level string `json:"level" yaml:"level"`
-}
-
-//WriterConfig struct
-type WriterConfig struct {
-	//File reference. Non mandatory but one of file or console logger is required.
-	File *FileConfig `json:"file,omitempty" yaml:"file,omitempty"`
-	//Console reference
-	Console *ConsoleConfig `json:"console,omitempty" yaml:"console,omitempty"`
-}
-
-//FileConfig - Configuration of file based logging
-type FileConfig struct {
-	//FilePath for the file based log writer
-	DefaultPath string `json:"defaultPath" yaml:"defaultPath"`
-	ErrorPath   string `json:"errorPath" yaml:"errorPath"`
-	WarnPath    string `json:"warnPath" yaml:"warnPath"`
-	InfoPath    string `json:"infoPath" yaml:"infoPath"`
-	DebugPath   string `json:"debugPath" yaml:"debugPath"`
-	TracePath   string `json:"tracePath" yaml:"tracePath"`
-}
-
-// ConsoleConfig - Configuration of console based logging. All Log Levels except ERROR and WARN are written to os.Stdout
-// The ERROR and WARN log levels can be written  to os.Stdout or os.Stderr, By default they go to os.Stderr
-type ConsoleConfig struct {
-	//WriteErrToStdOut write error messages to os.Stdout .
-	WriteErrToStdOut bool `json:"errToStdOut" yaml:"errToStdOut"`
-	//WriteWarnToStdOut write warn messages to os.Stdout .
-	WriteWarnToStdOut bool `json:"warnToStdOut" yaml:"warnToStdOut"`
-}
-
-// LogMessage struct.
-type LogMessage struct {
-	Time   time.Time `json:"timestamp"`
-	FnName string    `json:"function,omitempty"`
-	Line   int       `json:"line,omitempty"`
-	Msg    string    `json:"msg"`
-	Sev    Severity  `json:"sev"`
-}
-
 //Logger struct.
 type Logger struct {
 	sev             Severity
@@ -208,6 +133,8 @@ func Configure(l *LogConfig) {
 
 //Update the flags based on the severity level
 func (l *Logger) updateLvlFlags() error {
+	mutex.Lock()
+	defer mutex.Unlock()
 	if l.sev < 0 || l.sev > 5 {
 		return errors.New("Invalid severity ")
 	}
@@ -221,15 +148,15 @@ func (l *Logger) updateLvlFlags() error {
 
 //loadDefaultConfig function with load the default configuration
 func loadDefaultConfig() *LogConfig {
-	isAsync, _ := config.GetEnvAsBool("GC_L_DEF_FMT", false)
-	errToStdOut, _ := config.GetEnvAsBool("GC_L_ERR_STDOUT", false)
-	warnToStdOut, _ := config.GetEnvAsBool("GC_L_WRN_STDOUT", false)
+	isAsync, _ := config.GetEnvAsBool("GC_LOG_ASYNC", false)
+	errToStdOut, _ := config.GetEnvAsBool("GC_LOG_ERR_STDOUT", false)
+	warnToStdOut, _ := config.GetEnvAsBool("GC_LOG_WRN_STDOUT", false)
 
 	return &LogConfig{
-		Format:      config.GetEnvAsString("GC_L_DEF_FMT", "text"),
+		Format:      config.GetEnvAsString("GC_LOG_FMT", "text"),
 		Async:       isAsync,
-		DatePattern: config.GetEnvAsString("GC_L_DEF_FMT", time.RFC3339),
-		DefaultLvl:  config.GetEnvAsString("GC_L_DEF_LEVEL", "INFO"),
+		DatePattern: config.GetEnvAsString("GC_LOG_TIME_FMT", time.RFC3339),
+		DefaultLvl:  config.GetEnvAsString("GC_LOG_DEF_LEVEL", "INFO"),
 		Writers: []*WriterConfig{
 			{
 				Console: &ConsoleConfig{
@@ -366,6 +293,7 @@ func doAsyncLog() {
 
 //writeLog will write to the io.Writer interface
 func writeLog(w io.Writer, a ...interface{}) {
+
 	fmt.Fprintln(w, a...)
 }
 

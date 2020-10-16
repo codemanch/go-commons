@@ -121,6 +121,8 @@ func (p *Properties) resolveAndGet(k, d string) string {
 	return d
 }
 
+//Get Function will return the string for the specified key. If no value is present for the corresponding key
+//then the default value is returned.
 func (p *Properties) Get(k, d string) string {
 	p.RLock()
 	defer p.RUnlock()
@@ -130,6 +132,8 @@ func (p *Properties) Get(k, d string) string {
 	return d
 }
 
+//GetAsInt Function will return the value as int for the specified key. If no value is present for the corresponding key
+//then the default value is returned.In case the value is present and it is not a int an error is thrown.
 func (p *Properties) GetAsInt(k string, defaultVal int) (int, error) {
 	p.RLock()
 	defer p.RUnlock()
@@ -139,6 +143,8 @@ func (p *Properties) GetAsInt(k string, defaultVal int) (int, error) {
 	return defaultVal, nil
 }
 
+//GetAsInt64 Function will return the value as int64 for the specified key. If no value is present for the corresponding
+//key then the default value is returned.In case the value is present and it is not a int64 an error is thrown.
 func (p *Properties) GetAsInt64(k string, defaultVal int64) (int64, error) {
 	p.RLock()
 	defer p.RUnlock()
@@ -148,6 +154,8 @@ func (p *Properties) GetAsInt64(k string, defaultVal int64) (int64, error) {
 	return defaultVal, nil
 }
 
+//GetAsDecimal Function will return the value as int64 for the specified key.If no value is present for the
+//corresponding key then the default value is returned.In case the value is present and it is not decimal error is thrown.
 func (p *Properties) GetAsDecimal(k string, defaultVal float64) (float64, error) {
 	p.RLock()
 	defer p.RUnlock()
@@ -157,6 +165,8 @@ func (p *Properties) GetAsDecimal(k string, defaultVal float64) (float64, error)
 	return defaultVal, nil
 }
 
+//GetAsBool Function will return the value as int64 for the specified key.If no value is present for the
+//corresponding key then the default value is returned.In case the value is present and it is not a bool is thrown.
 func (p *Properties) GetAsBool(k string, defaultVal bool) (bool, error) {
 	p.RLock()
 	defer p.RUnlock()
@@ -166,6 +176,8 @@ func (p *Properties) GetAsBool(k string, defaultVal bool) (bool, error) {
 	return defaultVal, nil
 }
 
+//Put function will add the key,value to the properties. If the property was already present then the previous values is
+//returned
 func (p *Properties) Put(k, v string) string {
 	p.Lock()
 	defer p.Unlock()
@@ -178,6 +190,8 @@ func (p *Properties) Put(k, v string) string {
 	return ret
 }
 
+//PutInt function will add the key,value to the properties. The value is accepted as int however is stored as a string
+//If the property was already present then the previous values is returned
 func (p *Properties) PutInt(k string, v int) (int, error) {
 	p.Lock()
 	defer p.Unlock()
@@ -191,6 +205,8 @@ func (p *Properties) PutInt(k string, v int) (int, error) {
 	return ret, err
 }
 
+//PutInt64 function will add the key,value to the properties. The value is accepted as int64 however is is stored as a
+//string. If the property was already present then the previous values is returned
 func (p *Properties) PutInt64(k string, v int64) (int64, error) {
 	p.Lock()
 	defer p.Unlock()
@@ -205,6 +221,8 @@ func (p *Properties) PutInt64(k string, v int64) (int64, error) {
 
 }
 
+//PutDecimal function will add the key,value to the properties. The value is accepted as decimal however is is stored as
+//a string. If the property was already present then the previous values is returned
 func (p *Properties) PutDecimal(k string, v float64) (float64, error) {
 	p.Lock()
 	defer p.Unlock()
@@ -219,6 +237,8 @@ func (p *Properties) PutDecimal(k string, v float64) (float64, error) {
 
 }
 
+//PutBool function will add the key,value to the properties. The value is accepted as bool however is is stored as
+//a string. If the property was already present then the previous values is returned
 func (p *Properties) PutBool(k string, v bool) (bool, error) {
 	p.Lock()
 	defer p.Unlock()
@@ -233,6 +253,8 @@ func (p *Properties) PutBool(k string, v bool) (bool, error) {
 
 }
 
+//ReadFrom function will read the properties from a io.Reader.
+//This function does not close the reader and it is the responsibility of the caller to close the reader
 func (p *Properties) ReadFrom(r io.Reader) error {
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
@@ -253,6 +275,9 @@ func (p *Properties) ReadFrom(r io.Reader) error {
 	return nil
 }
 
+//WriteTo function will read the properties from a io.Writer.
+//If error occurs while writing to the reader, this will immediately return the error.This may cause parital writes.
+//This function does not close the writer and it is the responsibility of the caller to close the writer
 func (p *Properties) WriteTo(w io.Writer) error {
 	bufWriter := bufio.NewWriter(w)
 	var err error = nil
