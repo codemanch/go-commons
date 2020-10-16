@@ -51,6 +51,9 @@ var writers []LogWriter
 // Log configuration
 var logConfig *LogConfig
 
+//channel of type log message
+var logMsgChannel chan *LogMessage
+
 var mutex = &sync.Mutex{}
 
 //Levels of the logging by severity
@@ -119,7 +122,14 @@ func Configure(l *LogConfig) {
 	if l.DatePattern == "" {
 		l.DatePattern = time.RFC3339
 	}
+	if l.Async {
 
+		if l.QueueSize == 0 {
+			l.QueueSize = 512
+		}
+		logMsgChannel = make(chan *LogMessage, l.QueueSize)
+		go doAsyncLog()
+	}
 	if l.Writers != nil {
 		for _, w := range l.Writers {
 			if w.File != nil {
@@ -152,11 +162,13 @@ func (l *Logger) updateLvlFlags() error {
 
 //loadDefaultConfig function with load the default configuration
 func loadDefaultConfig() *LogConfig {
+	isAsync, _ := config.GetEnvAsBool("GC_LOG_ASYNC", false)
 	errToStdOut, _ := config.GetEnvAsBool("GC_LOG_ERR_STDOUT", false)
 	warnToStdOut, _ := config.GetEnvAsBool("GC_LOG_WRN_STDOUT", false)
 
 	return &LogConfig{
 		Format:      config.GetEnvAsString("GC_LOG_FMT", "text"),
+		Async:       isAsync,
 		DatePattern: config.GetEnvAsString("GC_LOG_TIME_FMT", time.RFC3339),
 		DefaultLvl:  config.GetEnvAsString("GC_LOG_DEF_LEVEL", "INFO"),
 		Writers: []*WriterConfig{
@@ -241,13 +253,13 @@ func GetLogger() *Logger {
 func writeLogMsg(writer io.Writer, logMsg *LogMessage) {
 
 	if logConfig.Format == "json" {
-		//TODO check if there is a better way
 		data, _ := json.Marshal(logMsg)
-
+		//TODO check if there is a better way
 		_, _ = writer.Write(data)
 		writeLog(writer, "")
 	} else if logConfig.Format == "text" {
 		if logMsg.FnName != textutils.EmptyStr {
+			//writeLog(writer, logMsg.Time.Format(logConfig.DatePattern), Levels[logMsg.Sev], logMsg.FnName+":"+strconv.Itoa(logMsg.Line), logMsg.Buf.String())
 			writer.Write([]byte(logMsg.Time.Format(logConfig.DatePattern)))
 			writer.Write(whiteSpaceBytes)
 			writer.Write(LevelsBytes[logMsg.Sev])
@@ -290,8 +302,22 @@ func handleLog(l *Logger, logMsg *LogMessage) {
 			logMsg.Line = no
 		}
 	}
-	for _, w := range writers {
-		w.DoLog(logMsg)
+	if logConfig.Async {
+		logMsgChannel <- logMsg
+
+	} else {
+		for _, w := range writers {
+			w.DoLog(logMsg)
+		}
+	}
+}
+
+func doAsyncLog() {
+
+	for logMsg := range logMsgChannel {
+		for _, w := range writers {
+			w.DoLog(logMsg)
+		}
 	}
 
 }
