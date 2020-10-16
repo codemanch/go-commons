@@ -342,5 +342,6 @@ const (
 	// PipeStr = "|"
 	PipeStr = "|"
 	// EmptyStr
-	EmptyStr = ""
+	EmptyStr      = ""
+	WhiteSpaceStr = " "
 )

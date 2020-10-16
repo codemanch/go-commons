@@ -7,8 +7,8 @@ type LogConfig struct {
 	//Default is text
 	Format string `json:"format,omitempty" yaml:"format,omitempty"`
 	//Async Flag to indicate if the writing of the flag is asynchronous.
-	//Default value is false
-	Async bool `json:"async,omitempty" yaml:"async,omitempty"`
+	////Default value is false
+	//Async bool `json:"async,omitempty" yaml:"async,omitempty"`
 	//QueueSize to indicate the number log routines that can be queued  to use in background
 	//This value is used only if the async value is set to true.
 	//Default value for the number items to be in queue 512

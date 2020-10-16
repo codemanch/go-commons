@@ -51,9 +51,6 @@ var writers []LogWriter
 // Log configuration
 var logConfig *LogConfig
 
-//channel of type log message
-var logMsgChannel chan *LogMessage
-
 var mutex = &sync.Mutex{}
 
 //Levels of the logging by severity
@@ -64,6 +61,16 @@ var Levels = [...]string{
 	"INFO",
 	"DEBUG",
 	"TRACE",
+}
+
+//Levels of the logging by severity
+var LevelsBytes = [...][]byte{
+	[]byte("OFF"),
+	[]byte("ERROR"),
+	[]byte("WARN"),
+	[]byte("INFO"),
+	[]byte("DEBUG"),
+	[]byte("TRACE"),
 }
 
 //LevelsMap of the logging by severity string severity type
@@ -93,7 +100,12 @@ const (
 	LogConfigEnvProperty = "LOG_CONFIG_FILE"
 	//DefaultlogFilePath specifies the location where the application should search for log config if the LogConfigEnvProperty is not specified
 	DefaultlogFilePath = "./log-config.json"
+	//newLineBytes
+
 )
+
+var newLine = []byte("\n")
+var whiteSpaceBytes = []byte(textutils.WhiteSpaceStr)
 
 func init() {
 	Configure(loadConfig())
@@ -107,14 +119,7 @@ func Configure(l *LogConfig) {
 	if l.DatePattern == "" {
 		l.DatePattern = time.RFC3339
 	}
-	if l.Async {
 
-		if l.QueueSize == 0 {
-			l.QueueSize = 512
-		}
-		logMsgChannel = make(chan *LogMessage, l.QueueSize)
-		go doAsyncLog()
-	}
 	if l.Writers != nil {
 		for _, w := range l.Writers {
 			if w.File != nil {
@@ -133,8 +138,7 @@ func Configure(l *LogConfig) {
 
 //Update the flags based on the severity level
 func (l *Logger) updateLvlFlags() error {
-	mutex.Lock()
-	defer mutex.Unlock()
+
 	if l.sev < 0 || l.sev > 5 {
 		return errors.New("Invalid severity ")
 	}
@@ -148,13 +152,11 @@ func (l *Logger) updateLvlFlags() error {
 
 //loadDefaultConfig function with load the default configuration
 func loadDefaultConfig() *LogConfig {
-	isAsync, _ := config.GetEnvAsBool("GC_LOG_ASYNC", false)
 	errToStdOut, _ := config.GetEnvAsBool("GC_LOG_ERR_STDOUT", false)
 	warnToStdOut, _ := config.GetEnvAsBool("GC_LOG_WRN_STDOUT", false)
 
 	return &LogConfig{
 		Format:      config.GetEnvAsString("GC_LOG_FMT", "text"),
-		Async:       isAsync,
 		DatePattern: config.GetEnvAsString("GC_LOG_TIME_FMT", time.RFC3339),
 		DefaultLvl:  config.GetEnvAsString("GC_LOG_DEF_LEVEL", "INFO"),
 		Writers: []*WriterConfig{
@@ -237,30 +239,47 @@ func GetLogger() *Logger {
 }
 
 func writeLogMsg(writer io.Writer, logMsg *LogMessage) {
+
 	if logConfig.Format == "json" {
-		data, _ := json.Marshal(logMsg)
 		//TODO check if there is a better way
+		data, _ := json.Marshal(logMsg)
+
 		_, _ = writer.Write(data)
 		writeLog(writer, "")
 	} else if logConfig.Format == "text" {
 		if logMsg.FnName != textutils.EmptyStr {
-			writeLog(writer, logMsg.Time.Format(logConfig.DatePattern), Levels[logMsg.Sev], logMsg.FnName+":"+strconv.Itoa(logMsg.Line), logMsg.Msg)
+			writer.Write([]byte(logMsg.Time.Format(logConfig.DatePattern)))
+			writer.Write(whiteSpaceBytes)
+			writer.Write(LevelsBytes[logMsg.Sev])
+			writer.Write(whiteSpaceBytes)
+			writer.Write([]byte(logMsg.FnName))
+			writer.Write(whiteSpaceBytes)
+			writer.Write([]byte(textutils.ColonStr))
+			writer.Write([]byte(strconv.Itoa(logMsg.Line)))
+			writer.Write(whiteSpaceBytes)
+			writer.Write(logMsg.Buf.Bytes())
+			writer.Write(newLine)
 		} else {
-			writeLog(writer, logMsg.Time.Format(logConfig.DatePattern), Levels[logMsg.Sev], logMsg.Msg)
+			writer.Write(formatTimeToBytes(logMsg.Time, logConfig.DatePattern))
+			writer.Write(whiteSpaceBytes)
+			writer.Write(LevelsBytes[logMsg.Sev])
+			writer.Write(whiteSpaceBytes)
+			writer.Write(logMsg.Buf.Bytes())
+			writer.Write(newLine)
 		}
 
 	}
+	putLogMessage(logMsg)
+}
+
+func formatTimeToBytes(t time.Time, layout string) []byte {
+
+	b := make([]byte, 0, len(layout))
+	return t.AppendFormat(b, layout)
 }
 
 //createLogMessage function creates a new log message with actual content variables
-func handleLog(sev Severity, l *Logger, msg string) {
-
-	logMsg := &LogMessage{
-		Time: time.Now(),
-		Msg:  msg,
-		Sev:  sev,
-	}
-
+func handleLog(l *Logger, logMsg *LogMessage) {
 	if l.includeFunction {
 		pc, _, no, _ := runtime.Caller(2)
 		details := runtime.FuncForPC(pc)
@@ -271,22 +290,8 @@ func handleLog(sev Severity, l *Logger, msg string) {
 			logMsg.Line = no
 		}
 	}
-	if logConfig.Async {
-		logMsgChannel <- logMsg
-
-	} else {
-		for _, w := range writers {
-			w.DoLog(logMsg)
-		}
-	}
-}
-
-func doAsyncLog() {
-
-	for logMsg := range logMsgChannel {
-		for _, w := range writers {
-			w.DoLog(logMsg)
-		}
+	for _, w := range writers {
+		w.DoLog(logMsg)
 	}
 
 }
@@ -313,28 +318,28 @@ func (l *Logger) IsEnabled(sev Severity) bool {
 //Error Logger
 func (l *Logger) Error(a ...interface{}) {
 	if l.errorEnabled && a != nil && len(a) > 0 {
-		handleLog(ErrLvl, l, fmt.Sprint(a...))
+		handleLog(l, getLogMessage(ErrLvl, a...))
 	}
 }
 
 //ErrorF Logger with formatting of the messages
 func (l *Logger) ErrorF(f string, a ...interface{}) {
 	if l.errorEnabled {
-		handleLog(ErrLvl, l, fmt.Sprintf(f, a...))
+		handleLog(l, getLogMessageF(ErrLvl, f, a...))
 	}
 }
 
 //Warn Logger
 func (l *Logger) Warn(a ...interface{}) {
 	if l.warnEnabled && a != nil && len(a) > 0 {
-		handleLog(WarnLvl, l, fmt.Sprint(a...))
+		handleLog(l, getLogMessage(WarnLvl, a...))
 	}
 }
 
 //WarnF Logger with formatting of the messages
 func (l *Logger) WarnF(f string, a ...interface{}) {
 	if l.warnEnabled {
-		handleLog(WarnLvl, l, fmt.Sprintf(f, a...))
+		handleLog(l, getLogMessageF(WarnLvl, f, a...))
 
 	}
 }
@@ -342,15 +347,14 @@ func (l *Logger) WarnF(f string, a ...interface{}) {
 //Info Logger
 func (l *Logger) Info(a ...interface{}) {
 	if l.infoEnabled && a != nil && len(a) > 0 {
-		handleLog(InfoLvl, l, fmt.Sprint(a...))
-
+		handleLog(l, getLogMessage(InfoLvl, a...))
 	}
 }
 
 //InfoF Logger
 func (l *Logger) InfoF(f string, a ...interface{}) {
 	if l.infoEnabled {
-		handleLog(InfoLvl, l, fmt.Sprintf(f, a...))
+		handleLog(l, getLogMessageF(InfoLvl, f, a...))
 
 	}
 }
@@ -358,21 +362,21 @@ func (l *Logger) InfoF(f string, a ...interface{}) {
 //Debug Logger
 func (l *Logger) Debug(a ...interface{}) {
 	if l.debugEnabled && a != nil && len(a) > 0 {
-		handleLog(DebugLvl, l, fmt.Sprint(a...))
+		handleLog(l, getLogMessage(DebugLvl, a...))
 	}
 }
 
 //DebugF Logger
 func (l *Logger) DebugF(f string, a ...interface{}) {
 	if l.debugEnabled {
-		handleLog(DebugLvl, l, fmt.Sprintf(f, a...))
+		handleLog(l, getLogMessageF(DebugLvl, f, a...))
 	}
 }
 
 //Trace Logger
 func (l *Logger) Trace(a ...interface{}) {
 	if l.traceEnabled && a != nil && len(a) > 0 {
-		handleLog(TraceLvl, l, fmt.Sprint(a...))
+		handleLog(l, getLogMessage(TraceLvl, a...))
 
 	}
 }
@@ -380,6 +384,6 @@ func (l *Logger) Trace(a ...interface{}) {
 //TraceF Logger
 func (l *Logger) TraceF(f string, a ...interface{}) {
 	if l.traceEnabled {
-		handleLog(TraceLvl, l, fmt.Sprintf(f, a...))
+		handleLog(l, getLogMessageF(TraceLvl, f, a...))
 	}
 }
