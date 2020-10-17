@@ -87,7 +87,7 @@ based on ```json```.
 
 following table specifies the field values
 |Field Name   | Type    | Description   | Default Value   |
-|:-:|:-:|:-:|:-:|
+|:-:|:-:|:-|:-:|
 |format|String| The output format of the log message. The valid values are `text` or `json`| text |
 |async|Boolean| Determines if the message is to be written to the destination asynchronously. If set to `true` then the LogMessage is prepared synchronously and then the write at destination in a async fassion.    |`false`|
 |   |   |   |   |
