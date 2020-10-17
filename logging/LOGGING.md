@@ -83,18 +83,11 @@ based on ```json```.
 ```
 
 following table specifies the field values
-|Field Name   | Type    | Description   | Default Value   |
-|:-:|:-:|:-|:-:|
+|Field Name   | Type    | Description   | Default Value|
+|:-|:-|:-|:-:|
 |format|String| The output format of the log message. The valid values are `text` or `json`| `text` |
-|async|Boolean| Determines if the message is to be written to the destination asynchronously. If set to `true` then the
-LogMessage is prepared synchronously and then the write at destination in a async fassion.    |`false`|
-|defaultLvl| String|Sets the default Logging level for the Logger. This is a global value. For overriding the log levels
- for a specific packages use `pkgConfigs`. The valid values are `OFF,ERROR,INFO,DEBUG,TRACE`| `INFO`|
+|async|Boolean| Determines if the message is to be written to the destination asynchronously. If set to `true` then the LogMessage is prepared synchronously.However, it is written to destination in a async fashion.|`false`||defaultLvl| String|Sets the default Logging level for the Logger. This is a global value. For overriding the log levels for a specific packages use `pkgConfigs`. The valid values are `OFF,ERROR,INFO,DEBUG,TRACE`| `INFO`|
 |includeFunction| Boolean| Determines if the Function Name needs to be printed in logs. |`false`|
-|includeLineNum|Boolean| Determines if the line number needs to be printed in logs. This config takes into effect only 
-if `includeFunction=true`|false|
-|pkgConfigs   |Array|This field consists array of package specific configuration. `{"pkgName": "<packageName>","level": 
-"<Level>"}`|null|
-|writers| Array|Array of writers either `file` or `console` based writer. Console Writer Has the following has the 
-following configuration `{"console": {"errToStdOut": false,"warnToStdOut": false}}`.Log levels except `ERROR and WARN`
- are written to `os.Stdout`. The Entries for the `ERROR,WARN` can bewritten to either os.StdErr or os.Stdout| N/A|
+|includeLineNum|Boolean| Determines if the line number needs to be printed in logs. This config takes into effect only if `includeFunction=true`|false|
+|pkgConfigs   |Array|This field consists array of package specific configuration. `{"pkgName": "<packageName>","level": "<Level>"}`|null|
+|writers| Array|Array of writers either `file` or `console` based writer. Console Writer Has the following has the following configuration `{"console": {"errToStdOut": false,"warnToStdOut": false}}`.Log levels except `ERROR and WARN` are written to `os.Stdout`. The Entries for the `ERROR,WARN` can bewritten to either os.StdErr or os.Stdout| N/A|
