@@ -100,7 +100,7 @@ const (
 	//TraceLvl - Logging turned on for Trace,Info, Warning and error Levels.
 	TraceLvl
 	// LogConfigEnvProperty specifies the environment variable that would specify the file location
-	LogConfigEnvProperty = "LOG_CONFIG_FILE"
+	LogConfigEnvProperty = "GC_LOG_CONFIG_FILE"
 	//DefaultlogFilePath specifies the location where the application should search for log config if the LogConfigEnvProperty is not specified
 	DefaultlogFilePath = "./log-config.json"
 	//newLineBytes
@@ -164,7 +164,7 @@ func (l *Logger) updateLvlFlags() error {
 func loadDefaultConfig() *LogConfig {
 	isAsync, _ := config.GetEnvAsBool("GC_LOG_ASYNC", false)
 	errToStdOut, _ := config.GetEnvAsBool("GC_LOG_ERR_STDOUT", false)
-	warnToStdOut, _ := config.GetEnvAsBool("GC_LOG_WRN_STDOUT", false)
+	warnToStdOut, _ := config.GetEnvAsBool("GC_LOG_WARN_STDOUT", false)
 
 	return &LogConfig{
 		Format:      config.GetEnvAsString("GC_LOG_FMT", "text"),
