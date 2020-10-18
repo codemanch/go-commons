@@ -116,8 +116,8 @@ const (
 	SingleQuoteChar = '\''
 	// ForwardSlashChar  ='/'
 	ForwardSlashChar = '/'
-	// BackSlashChar = '/'
-	BackSlashChar = '/'
+	// BackSlashChar = '\'
+	BackSlashChar = '\\'
 	// QuestionMarkChar  ='?'
 	QuestionMarkChar = '?'
 	// GreaterThanChar = '>'
@@ -287,7 +287,7 @@ const (
 	// ForwardSlashStr  ="/"
 	ForwardSlashStr = "/"
 	// BackSlashStr = "/"
-	BackSlashStr = "/"
+	BackSlashStr = "\\"
 	// QuestionMarkStr  ="?"
 	QuestionMarkStr = "?"
 	// GreaterThanStr = ">"
@@ -342,5 +342,6 @@ const (
 	// PipeStr = "|"
 	PipeStr = "|"
 	// EmptyStr
-	EmptyStr = ""
+	EmptyStr      = ""
+	WhiteSpaceStr = " "
 )

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/appmanch/go-commons/textutils"
 	"io"
 	"io/ioutil"
 	"os"
@@ -14,86 +13,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/appmanch/go-commons/config"
+	"github.com/appmanch/go-commons/textutils"
+
 	"github.com/appmanch/go-commons/fsutils"
-	"github.com/appmanch/go-commons/misc"
 )
 
 //Severity of the logging levels
 type Severity int
-
-//LogConfig - Configuration & Settings for the logger.
-type LogConfig struct {
-
-	//Format of the log. valid values are text,json
-	//Default is text
-	Format string `json:"format,omitempty" yaml:"format,omitempty"`
-	//Async Flag to indicate if the writing of the flag is asynchronous.
-	//Default value is false
-	Async bool `json:"async,omitempty" yaml:"async,omitempty"`
-	//QueueSize to indicate the number log routines that can be queued  to use in background
-	//This value is used only if the async value is set to true.
-	//Default value for the number items to be in queue 512
-	QueueSize int `json:"queueSize,omitempty" yaml:"numRoutines,omitempty"`
-	//Date - Defaults to  time.RFC3339 pattern
-	DatePattern string `json:"datePattern,omitempty" yaml:"datePattern,omitempty"`
-	//IncludeFunction will include the calling function name  in the log entries
-	//Default value : false
-	IncludeFunction bool `json:"includeFunction,omitempty" yaml:"includeFunction,omitempty"`
-	//IncludeLineNum ,includes Line number for the log file
-	//If IncludeFunction Line is set to false this config is ignored
-	IncludeLineNum bool `json:"includeLineNum,omitempty" yaml:"includeLineNum,omitempty"`
-	//DefaultLvl that will be used as default
-	DefaultLvl string `json:"defaultLvl" yaml:"defaultLvl"`
-	//PackageConfig that can be used to
-	PkgConfigs []*PackageConfig `json:"pkgConfigs" yaml:"pkgConfigs"`
-	//Writers writers for the logger. Need one for all levels
-	//If a writer is not found for a specific level it will fallback to os.Stdout if the level is greater then Warn and os.Stderr otherwise
-	Writers []*WriterConfig `json:"writers" yaml:"writers"`
-}
-
-// PackageConfig configuration
-type PackageConfig struct {
-	//PackageName
-	PackageName string `json:"pkgName" yaml:"pkgName"`
-	//Level to be set valid values : OFF,ERROR,WARN,INFO,DEBUG,TRACE
-	Level string `json:"level" yaml:"level"`
-}
-
-//WriterConfig struct
-type WriterConfig struct {
-	//File reference. Non mandatory but one of file or console logger is required.
-	File *FileConfig `json:"file,omitempty" yaml:"file,omitempty"`
-	//Console reference
-	Console *ConsoleConfig `json:"console,omitempty" yaml:"console,omitempty"`
-}
-
-//FileConfig - Configuration of file based logging
-type FileConfig struct {
-	//FilePath for the file based log writer
-	DefaultPath string `json:"defaultPath" yaml:"defaultPath"`
-	ErrorPath   string `json:"errorPath" yaml:"errorPath"`
-	WarnPath    string `json:"warnPath" yaml:"warnPath"`
-	InfoPath    string `json:"infoPath" yaml:"infoPath"`
-	DebugPath   string `json:"debugPath" yaml:"debugPath"`
-	TracePath   string `json:"tracePath" yaml:"tracePath"`
-}
-
-// ConsoleConfig - Configuration of console based logging. All Log Levels except ERROR and WARN are written to os.Stdout
-// The ERROR and WARN log levels can be written  to os.Stdout or os.Stderr, By default they go to os.Stderr
-type ConsoleConfig struct {
-	//WriteErrToStdOut write error messages to os.Stdout .
-	WriteErrToStdOut bool `json:"errToStdOut" yaml:"errToStdOut"`
-	//WriteWarnToStdOut write warn messages to os.Stdout .
-	WriteWarnToStdOut bool `json:"warnToStdOut" yaml:"warnToStdOut"`
-}
-
-type LogMessage struct {
-	Time   time.Time `json:"timestamp"`
-	FnName string    `json:"function,omitempty" `
-	Line   int       `json:"line,omitempty"`
-	Msg    string    `json:"msg"`
-	Sev    Severity  `json:"sev"`
-}
 
 //Logger struct.
 type Logger struct {
@@ -108,6 +35,7 @@ type Logger struct {
 	includeLine     bool
 }
 
+// LogWriter interface
 type LogWriter interface {
 	InitConfig(w *WriterConfig)
 	DoLog(logMsg *LogMessage)
@@ -138,6 +66,16 @@ var Levels = [...]string{
 	"TRACE",
 }
 
+//Levels of the logging by severity
+var LevelsBytes = [...][]byte{
+	[]byte("OFF"),
+	[]byte("ERROR"),
+	[]byte("WARN"),
+	[]byte("INFO"),
+	[]byte("DEBUG"),
+	[]byte("TRACE"),
+}
+
 //LevelsMap of the logging by severity string severity type
 var LevelsMap = map[string]Severity{
 	"OFF":   Off,
@@ -165,12 +103,18 @@ const (
 	LogConfigEnvProperty = "LOG_CONFIG_FILE"
 	//DefaultlogFilePath specifies the location where the application should search for log config if the LogConfigEnvProperty is not specified
 	DefaultlogFilePath = "./log-config.json"
+	//newLineBytes
+
 )
+
+var newLine = []byte("\n")
+var whiteSpaceBytes = []byte(textutils.WhiteSpaceStr)
 
 func init() {
 	Configure(loadConfig())
 }
 
+// Configure Logging
 func Configure(l *LogConfig) {
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -204,6 +148,7 @@ func Configure(l *LogConfig) {
 
 //Update the flags based on the severity level
 func (l *Logger) updateLvlFlags() error {
+
 	if l.sev < 0 || l.sev > 5 {
 		return errors.New("Invalid severity ")
 	}
@@ -217,15 +162,22 @@ func (l *Logger) updateLvlFlags() error {
 
 //loadDefaultConfig function with load the default configuration
 func loadDefaultConfig() *LogConfig {
+	isAsync, _ := config.GetEnvAsBool("GC_LOG_ASYNC", false)
+	errToStdOut, _ := config.GetEnvAsBool("GC_LOG_ERR_STDOUT", false)
+	warnToStdOut, _ := config.GetEnvAsBool("GC_LOG_WRN_STDOUT", false)
 
 	return &LogConfig{
-		Format:      "text",
-		Async:       false,
-		DatePattern: time.RFC3339,
-		DefaultLvl:  Levels[InfoLvl],
+		Format:      config.GetEnvAsString("GC_LOG_FMT", "text"),
+		Async:       isAsync,
+		DatePattern: config.GetEnvAsString("GC_LOG_TIME_FMT", time.RFC3339),
+		DefaultLvl:  config.GetEnvAsString("GC_LOG_DEF_LEVEL", "INFO"),
 		Writers: []*WriterConfig{
 			{
-				Console: &ConsoleConfig{},
+				Console: &ConsoleConfig{
+
+					WriteErrToStdOut:  errToStdOut,
+					WriteWarnToStdOut: warnToStdOut,
+				},
 			},
 		},
 	}
@@ -234,7 +186,7 @@ func loadDefaultConfig() *LogConfig {
 //loadConfig function will load the log configuration.
 func loadConfig() *LogConfig {
 	var logConfig = &LogConfig{}
-	fileName := misc.GetEnvAsString(LogConfigEnvProperty, DefaultlogFilePath)
+	fileName := config.GetEnvAsString(LogConfigEnvProperty, DefaultlogFilePath)
 	if fsutils.FileExists(fileName) {
 		contentType := fsutils.LookupContentType(fileName)
 		if contentType == "application/json" {
@@ -263,7 +215,7 @@ func loadConfig() *LogConfig {
 	return logConfig
 }
 
-//GetLogger function will return the logger for that package
+//GetLogger function will return the logger object for that package
 func GetLogger() *Logger {
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -299,6 +251,7 @@ func GetLogger() *Logger {
 }
 
 func writeLogMsg(writer io.Writer, logMsg *LogMessage) {
+
 	if logConfig.Format == "json" {
 		data, _ := json.Marshal(logMsg)
 		//TODO check if there is a better way
@@ -306,23 +259,39 @@ func writeLogMsg(writer io.Writer, logMsg *LogMessage) {
 		writeLog(writer, "")
 	} else if logConfig.Format == "text" {
 		if logMsg.FnName != textutils.EmptyStr {
-			writeLog(writer, logMsg.Time.Format(logConfig.DatePattern), Levels[logMsg.Sev], logMsg.FnName+":"+strconv.Itoa(logMsg.Line), logMsg.Msg)
+			//writeLog(writer, logMsg.Time.Format(logConfig.DatePattern), Levels[logMsg.Sev], logMsg.FnName+":"+strconv.Itoa(logMsg.Line), logMsg.Buf.String())
+			writer.Write([]byte(logMsg.Time.Format(logConfig.DatePattern)))
+			writer.Write(whiteSpaceBytes)
+			writer.Write(LevelsBytes[logMsg.Sev])
+			writer.Write(whiteSpaceBytes)
+			writer.Write([]byte(logMsg.FnName))
+			writer.Write(whiteSpaceBytes)
+			writer.Write([]byte(textutils.ColonStr))
+			writer.Write([]byte(strconv.Itoa(logMsg.Line)))
+			writer.Write(whiteSpaceBytes)
+			writer.Write(logMsg.Buf.Bytes())
+			writer.Write(newLine)
 		} else {
-			writeLog(writer, logMsg.Time.Format(logConfig.DatePattern), Levels[logMsg.Sev], logMsg.Msg)
+			writer.Write(formatTimeToBytes(logMsg.Time, logConfig.DatePattern))
+			writer.Write(whiteSpaceBytes)
+			writer.Write(LevelsBytes[logMsg.Sev])
+			writer.Write(whiteSpaceBytes)
+			writer.Write(logMsg.Buf.Bytes())
+			writer.Write(newLine)
 		}
 
 	}
+	putLogMessage(logMsg)
+}
+
+func formatTimeToBytes(t time.Time, layout string) []byte {
+
+	b := make([]byte, 0, len(layout))
+	return t.AppendFormat(b, layout)
 }
 
 //createLogMessage function creates a new log message with actual content variables
-func handleLog(sev Severity, l *Logger, msg string) {
-
-	logMsg := &LogMessage{
-		Time: time.Now(),
-		Msg:  msg,
-		Sev:  sev,
-	}
-
+func handleLog(l *Logger, logMsg *LogMessage) {
 	if l.includeFunction {
 		pc, _, no, _ := runtime.Caller(2)
 		details := runtime.FuncForPC(pc)
@@ -355,6 +324,7 @@ func doAsyncLog() {
 
 //writeLog will write to the io.Writer interface
 func writeLog(w io.Writer, a ...interface{}) {
+
 	fmt.Fprintln(w, a...)
 }
 
@@ -374,28 +344,28 @@ func (l *Logger) IsEnabled(sev Severity) bool {
 //Error Logger
 func (l *Logger) Error(a ...interface{}) {
 	if l.errorEnabled && a != nil && len(a) > 0 {
-		handleLog(ErrLvl, l, fmt.Sprint(a...))
+		handleLog(l, getLogMessage(ErrLvl, a...))
 	}
 }
 
 //ErrorF Logger with formatting of the messages
 func (l *Logger) ErrorF(f string, a ...interface{}) {
 	if l.errorEnabled {
-		handleLog(ErrLvl, l, fmt.Sprintf(f, a...))
+		handleLog(l, getLogMessageF(ErrLvl, f, a...))
 	}
 }
 
 //Warn Logger
 func (l *Logger) Warn(a ...interface{}) {
 	if l.warnEnabled && a != nil && len(a) > 0 {
-		handleLog(WarnLvl, l, fmt.Sprint(a...))
+		handleLog(l, getLogMessage(WarnLvl, a...))
 	}
 }
 
 //WarnF Logger with formatting of the messages
 func (l *Logger) WarnF(f string, a ...interface{}) {
 	if l.warnEnabled {
-		handleLog(WarnLvl, l, fmt.Sprintf(f, a...))
+		handleLog(l, getLogMessageF(WarnLvl, f, a...))
 
 	}
 }
@@ -403,15 +373,14 @@ func (l *Logger) WarnF(f string, a ...interface{}) {
 //Info Logger
 func (l *Logger) Info(a ...interface{}) {
 	if l.infoEnabled && a != nil && len(a) > 0 {
-		handleLog(InfoLvl, l, fmt.Sprint(a...))
-
+		handleLog(l, getLogMessage(InfoLvl, a...))
 	}
 }
 
 //InfoF Logger
 func (l *Logger) InfoF(f string, a ...interface{}) {
 	if l.infoEnabled {
-		handleLog(InfoLvl, l, fmt.Sprintf(f, a...))
+		handleLog(l, getLogMessageF(InfoLvl, f, a...))
 
 	}
 }
@@ -419,21 +388,21 @@ func (l *Logger) InfoF(f string, a ...interface{}) {
 //Debug Logger
 func (l *Logger) Debug(a ...interface{}) {
 	if l.debugEnabled && a != nil && len(a) > 0 {
-		handleLog(DebugLvl, l, fmt.Sprint(a...))
+		handleLog(l, getLogMessage(DebugLvl, a...))
 	}
 }
 
 //DebugF Logger
 func (l *Logger) DebugF(f string, a ...interface{}) {
 	if l.debugEnabled {
-		handleLog(DebugLvl, l, fmt.Sprintf(f, a...))
+		handleLog(l, getLogMessageF(DebugLvl, f, a...))
 	}
 }
 
 //Trace Logger
 func (l *Logger) Trace(a ...interface{}) {
 	if l.traceEnabled && a != nil && len(a) > 0 {
-		handleLog(TraceLvl, l, fmt.Sprint(a...))
+		handleLog(l, getLogMessage(TraceLvl, a...))
 
 	}
 }
@@ -441,6 +410,6 @@ func (l *Logger) Trace(a ...interface{}) {
 //TraceF Logger
 func (l *Logger) TraceF(f string, a ...interface{}) {
 	if l.traceEnabled {
-		handleLog(TraceLvl, l, fmt.Sprintf(f, a...))
+		handleLog(l, getLogMessageF(TraceLvl, f, a...))
 	}
 }

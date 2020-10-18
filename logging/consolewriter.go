@@ -1,24 +1,27 @@
 package logging
 
 import (
+	"bufio"
 	"io"
 	"os"
 )
 
+// ConsoleWriter struct
 type ConsoleWriter struct {
 	errorWriter, warnWriter, infoWriter, debugWriter, traceWriter io.Writer
 }
 
+// InitConfig Consolewriter
 func (cw *ConsoleWriter) InitConfig(w *WriterConfig) {
 	if w.Console.WriteErrToStdOut {
 		cw.errorWriter = os.Stdout
 	} else {
-		cw.errorWriter = os.Stderr
+		cw.errorWriter = bufio.NewWriter(os.Stderr)
 	}
 	if w.Console.WriteWarnToStdOut {
 		cw.warnWriter = os.Stdout
 	} else {
-		cw.warnWriter = os.Stderr
+		cw.warnWriter = bufio.NewWriter(os.Stderr)
 	}
 
 	cw.infoWriter = os.Stdout
@@ -27,6 +30,7 @@ func (cw *ConsoleWriter) InitConfig(w *WriterConfig) {
 
 }
 
+// DoLog consolewriter
 func (cw *ConsoleWriter) DoLog(logMsg *LogMessage) {
 	var writer io.Writer
 
@@ -44,10 +48,14 @@ func (cw *ConsoleWriter) DoLog(logMsg *LogMessage) {
 	case TraceLvl:
 		writer = cw.traceWriter
 	}
+
 	if writer != nil {
+
 		writeLogMsg(writer, logMsg)
 	}
 }
+
+// Close close consolewriter
 func (cw *ConsoleWriter) Close() error {
 	return nil
 }
