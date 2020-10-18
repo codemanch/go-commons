@@ -4,9 +4,9 @@ The go-commons ```logging``` package provides enterprise grade logging capabilit
 # Features
 * Multiple logging levels ```OFF,ERROR,INFO,DEBUG,TRACE```
 * Console and File based writers
-* Rolling file support ([WIP!](https://github.com/appmanch/go-commons/issues/7)) 
+* Rolling file support ([WIP](https://github.com/appmanch/go-commons/issues/7)) 
 * Ability to specify log levels for a specific package  
-* Internationalisation (i18n) support (([WIP!](https://github.com/appmanch/go-commons/issues/6)) )
+* Internationalisation (i18n) support ([WIP](https://github.com/appmanch/go-commons/issues/6)) 
 * Async logging support
 * Configuration can be done using either a file,env variables,Struct values at runtime.
 
