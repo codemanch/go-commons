@@ -6,7 +6,7 @@ on:
     paths-ignore:
       - '.github/*'
       - 'README.md'
-  pull_requst:
+  pull_request:
     branches:
       - '*'
     paths-ignore:
