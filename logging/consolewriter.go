@@ -11,7 +11,7 @@ type ConsoleWriter struct {
 	errorWriter, warnWriter, infoWriter, debugWriter, traceWriter io.Writer
 }
 
-// InitConfig Consolewriter
+// InitConfig ConsoleWriter
 func (cw *ConsoleWriter) InitConfig(w *WriterConfig) {
 	if w.Console.WriteErrToStdOut {
 		cw.errorWriter = os.Stdout
@@ -28,9 +28,13 @@ func (cw *ConsoleWriter) InitConfig(w *WriterConfig) {
 	cw.debugWriter = os.Stdout
 	cw.traceWriter = os.Stdout
 
+	cw.infoWriter = io.Discard
+	cw.debugWriter = io.Discard
+	cw.traceWriter = io.Discard
+
 }
 
-// DoLog consolewriter
+// DoLog consoleWriter
 func (cw *ConsoleWriter) DoLog(logMsg *LogMessage) {
 	var writer io.Writer
 
@@ -55,7 +59,7 @@ func (cw *ConsoleWriter) DoLog(logMsg *LogMessage) {
 	}
 }
 
-// Close close consolewriter
+// Close close ConsoleWriter
 func (cw *ConsoleWriter) Close() error {
 	return nil
 }

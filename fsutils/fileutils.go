@@ -46,7 +46,7 @@ func DirExists(path string) bool {
 	return fileInfo.IsDir()
 }
 
-//LookupContentType will lookup contentype based on the file extension.
+//LookupContentType will lookup ContentType based on the file extension.
 //This function will only check based on the name of the file and use the file extension.
 func LookupContentType(path string) string {
 	if val, ok := KnownFileTypes[filepath.Ext(path)]; ok {

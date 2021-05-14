@@ -57,7 +57,7 @@ func (p *Properties) resolve(v *value) string {
 //resolveAll will go through the properties and resolve all variables necessary and add it to the resolvedProperties map
 func (p *Properties) resolveAll() {
 	p.resolvedProps = make(map[string]string)
-	for k, _ := range p.props {
+	for k := range p.props {
 		p.resolvedProps[k] = p.resolve(p.props[k])
 	}
 
@@ -276,12 +276,12 @@ func (p *Properties) ReadFrom(r io.Reader) error {
 }
 
 //WriteTo function will read the properties from a io.Writer.
-//If error occurs while writing to the reader, this will immediately return the error.This may cause parital writes.
+//If error occurs while writing to the reader, this will immediately return the error.This may cause partial writes.
 //This function does not close the writer and it is the responsibility of the caller to close the writer
 func (p *Properties) WriteTo(w io.Writer) error {
 	bufWriter := bufio.NewWriter(w)
 	var err error = nil
-	for k, _ := range p.props {
+	for k := range p.props {
 		_, err = bufWriter.WriteString(k)
 		if err != nil {
 			break

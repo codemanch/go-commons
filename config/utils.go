@@ -3,11 +3,12 @@ package config
 import "io"
 
 // Configuration is an interface that wraps the  methods for a standard configuration.
+
 type Configuration interface {
 
 	//ReadFrom a reader from Reader
 	ReadFrom(r io.Reader) error
-	//
+	//Write to a writer
 	WriteTo(w io.Writer) error
 	//Get returns configuration value as string identified by the key
 	//If the value is absent then it will return defaultVal supplied.

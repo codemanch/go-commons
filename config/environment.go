@@ -16,7 +16,7 @@ func GetEnvAsString(key, defaultVal string) string {
 
 }
 
-//GetEnvAsInt function will fecth the value from environment variable and convert that to an integer.
+//GetEnvAsInt function will fetch the value from environment variable and convert that to an integer.
 //If the value is absent then it will return defaultVal supplied.
 func GetEnvAsInt(key string, defaultVal int) (int, error) {
 	if value, ok := os.LookupEnv(key); ok {
@@ -34,7 +34,7 @@ func GetEnvAsInt64(key string, defaultVal int64) (int64, error) {
 	return defaultVal, nil
 }
 
-//GetEnvAsDecimal function will fecth the value from environment variable and convert that to an float64.
+//GetEnvAsDecimal function will fetch the value from environment variable and convert that to an float64.
 //If the value is absent then it will return defaultVal supplied.
 func GetEnvAsDecimal(key string, defaultVal float64) (float64, error) {
 	if value, ok := os.LookupEnv(key); ok {
@@ -43,7 +43,7 @@ func GetEnvAsDecimal(key string, defaultVal float64) (float64, error) {
 	return defaultVal, nil
 }
 
-//GetEnvAsBool function will fecth the value from environment variable and convert that to an GetEnvAsBool.
+//GetEnvAsBool function will fetch the value from environment variable and convert that to an GetEnvAsBool.
 //If the value is absent then it will return defaultVal supplied.
 // Valid boolean values are  1, t, T, TRUE, true, True, 0, f, F, FALSE, false, False.
 func GetEnvAsBool(key string, defaultVal bool) (bool, error) {
