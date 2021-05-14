@@ -10,20 +10,25 @@ import (
 
 var logMsgPool = &sync.Pool{
 	New: func() interface{} {
-		return &LogMessage{
-			Buf: &bytes.Buffer{},
+		lm := &LogMessage{
+			Content: &bytes.Buffer{},
+			Buf:     &bytes.Buffer{},
 		}
+		lm.Content.Grow(1024)
+		lm.Buf.Grow(1280)
+		return lm
 	},
 }
 
 // LogMessage struct.
 type LogMessage struct {
-	Time     time.Time     `json:"timestamp"`
-	FnName   string        `json:"function,omitempty"`
-	Line     int           `json:"line,omitempty"`
-	Buf      *bytes.Buffer `json:"msg"`
-	Sev      Severity      `json:"sev"`
-	SevBytes []byte
+	Time    time.Time     `json:"timestamp"`
+	FnName  string        `json:"function,omitempty"`
+	Line    int           `json:"line,omitempty"`
+	Content *bytes.Buffer `json:"msg"`
+	Sev     Severity      `json:"sev"`
+	Buf     *bytes.Buffer
+	//SevBytes []byte
 }
 
 func getLogMessageF(sev Severity, f string, v ...interface{}) *LogMessage {
@@ -32,7 +37,7 @@ func getLogMessageF(sev Severity, f string, v ...interface{}) *LogMessage {
 	msg.Time = time.Now()
 	msg.FnName = textutils.EmptyStr
 	msg.Line = 0
-	fmt.Fprintf(msg.Buf, f, v...)
+	_, _ = fmt.Fprintf(msg.Content, f, v...)
 	return msg
 }
 
@@ -42,12 +47,11 @@ func getLogMessage(sev Severity, v ...interface{}) *LogMessage {
 	msg.Time = time.Now()
 	msg.FnName = textutils.EmptyStr
 	msg.Line = 0
-	fmt.Fprint(msg.Buf, v...)
+	_, _ = fmt.Fprint(msg.Content, v...)
 	return msg
-
 }
 
 func putLogMessage(logMsg *LogMessage) {
-	logMsg.Buf.Reset()
+	logMsg.Content.Reset()
 	logMsgPool.Put(logMsg)
 }

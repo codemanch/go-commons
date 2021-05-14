@@ -12,7 +12,7 @@ type FileWriter struct {
 	errorWriter, warnWriter, infoWriter, debugWriter, traceWriter *os.File
 }
 
-// InitConfig Filewriter
+// InitConfig FileWriter
 func (fw *FileWriter) InitConfig(w *WriterConfig) {
 
 	var defaultWriter *os.File

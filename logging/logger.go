@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -100,18 +101,22 @@ const (
 	//TraceLvl - Logging turned on for Trace,Info, Warning and error Levels.
 	TraceLvl
 	// LogConfigEnvProperty specifies the environment variable that would specify the file location
-	LogConfigEnvProperty = "LOG_CONFIG_FILE"
+	LogConfigEnvProperty = "GC_LOG_CONFIG_FILE"
 	//DefaultlogFilePath specifies the location where the application should search for log config if the LogConfigEnvProperty is not specified
 	DefaultlogFilePath = "./log-config.json"
 	//newLineBytes
 
 )
 
-var newLine = []byte("\n")
+var newLineBytes = []byte("\n")
 var whiteSpaceBytes = []byte(textutils.WhiteSpaceStr)
 
 func init() {
 	Configure(loadConfig())
+	//for i:=0;i<10000;i++{
+	//	lm:=logMsgPool.Get().(*LogMessage)
+	//	putLogMessage(lm)
+	//}
 }
 
 // Configure Logging
@@ -125,7 +130,7 @@ func Configure(l *LogConfig) {
 	if l.Async {
 
 		if l.QueueSize == 0 {
-			l.QueueSize = 512
+			l.QueueSize = 4096
 		}
 		logMsgChannel = make(chan *LogMessage, l.QueueSize)
 		go doAsyncLog()
@@ -164,7 +169,7 @@ func (l *Logger) updateLvlFlags() error {
 func loadDefaultConfig() *LogConfig {
 	isAsync, _ := config.GetEnvAsBool("GC_LOG_ASYNC", false)
 	errToStdOut, _ := config.GetEnvAsBool("GC_LOG_ERR_STDOUT", false)
-	warnToStdOut, _ := config.GetEnvAsBool("GC_LOG_WRN_STDOUT", false)
+	warnToStdOut, _ := config.GetEnvAsBool("GC_LOG_WARN_STDOUT", false)
 
 	return &LogConfig{
 		Format:      config.GetEnvAsString("GC_LOG_FMT", "text"),
@@ -174,7 +179,6 @@ func loadDefaultConfig() *LogConfig {
 		Writers: []*WriterConfig{
 			{
 				Console: &ConsoleConfig{
-
 					WriteErrToStdOut:  errToStdOut,
 					WriteWarnToStdOut: warnToStdOut,
 				},
@@ -221,67 +225,72 @@ func GetLogger() *Logger {
 	defer mutex.Unlock()
 	pc, _, _, _ := runtime.Caller(1)
 	details := runtime.FuncForPC(pc)
-	fnNameSplit := strings.Split(details.Name(), "/")
+	fnNameSplit := strings.Split(details.Name(), "/") //TODO update the separator later
 	pkgFnName := strings.Split(fnNameSplit[len(fnNameSplit)-1], ".")
 	pkgName := pkgFnName[0]
 
-	if logger, ok := loggers[pkgName]; ok {
-		return logger
-	}
-	Level := logConfig.DefaultLvl
+	if _, ok := loggers[pkgName]; !ok {
+		Level := logConfig.DefaultLvl
 
-	if logConfig.PkgConfigs != nil && len(logConfig.PkgConfigs) > 0 {
-		for _, pkgConfig := range logConfig.PkgConfigs {
-			if pkgConfig.PackageName == pkgName {
-				Level = pkgConfig.Level
+		if logConfig.PkgConfigs != nil && len(logConfig.PkgConfigs) > 0 {
+			for _, pkgConfig := range logConfig.PkgConfigs {
+				if pkgConfig.PackageName == pkgName {
+					Level = pkgConfig.Level
+				}
 			}
 		}
+
+		logger := &Logger{
+			sev:             LevelsMap[Level],
+			pkgName:         pkgName,
+			includeFunction: logConfig.IncludeFunction,
+			includeLine:     logConfig.IncludeLineNum,
+		}
+		_ = logger.updateLvlFlags()
+		loggers[pkgName] = logger
 	}
 
-	logger := &Logger{
-		sev:             LevelsMap[Level],
-		pkgName:         pkgName,
-		includeFunction: logConfig.IncludeFunction,
-		includeLine:     logConfig.IncludeLineNum,
-	}
-	_ = logger.updateLvlFlags()
-	loggers[pkgName] = logger
-
-	return logger
+	return loggers[pkgName]
 }
 
 func writeLogMsg(writer io.Writer, logMsg *LogMessage) {
-
 	if logConfig.Format == "json" {
+		//TODO update marshalling to direct field access to avoid reflection.
+		//This will be based on codec branch.
 		data, _ := json.Marshal(logMsg)
-		//TODO check if there is a better way
 		_, _ = writer.Write(data)
-		writeLog(writer, "")
+
 	} else if logConfig.Format == "text" {
+		buf := bufio.NewWriter(writer)
+
 		if logMsg.FnName != textutils.EmptyStr {
-			//writeLog(writer, logMsg.Time.Format(logConfig.DatePattern), Levels[logMsg.Sev], logMsg.FnName+":"+strconv.Itoa(logMsg.Line), logMsg.Buf.String())
-			writer.Write([]byte(logMsg.Time.Format(logConfig.DatePattern)))
-			writer.Write(whiteSpaceBytes)
-			writer.Write(LevelsBytes[logMsg.Sev])
-			writer.Write(whiteSpaceBytes)
-			writer.Write([]byte(logMsg.FnName))
-			writer.Write(whiteSpaceBytes)
-			writer.Write([]byte(textutils.ColonStr))
-			writer.Write([]byte(strconv.Itoa(logMsg.Line)))
-			writer.Write(whiteSpaceBytes)
-			writer.Write(logMsg.Buf.Bytes())
-			writer.Write(newLine)
+
+			//writeLog(writer, logMsg.Time.Format(logConfig.DatePattern), Levels[logMsg.Sev], logMsg.FnName+":"+strconv.Itoa(logMsg.Line), logMsg.Content.String())
+
+			_, _ = buf.Write(formatTimeToBytes(logMsg.Time, logConfig.DatePattern))
+			_, _ = buf.Write(whiteSpaceBytes)
+			_, _ = buf.Write(LevelsBytes[logMsg.Sev])
+			_, _ = buf.Write(whiteSpaceBytes)
+			_, _ = buf.WriteString(logMsg.FnName)
+			_, _ = buf.WriteString(textutils.ColonStr)
+			_, _ = buf.WriteString(strconv.Itoa(logMsg.Line))
+			_, _ = buf.Write(whiteSpaceBytes)
+			_, _ = buf.Write(logMsg.Content.Bytes())
+			_, _ = buf.Write(newLineBytes)
+
 		} else {
-			writer.Write(formatTimeToBytes(logMsg.Time, logConfig.DatePattern))
-			writer.Write(whiteSpaceBytes)
-			writer.Write(LevelsBytes[logMsg.Sev])
-			writer.Write(whiteSpaceBytes)
-			writer.Write(logMsg.Buf.Bytes())
-			writer.Write(newLine)
+			//writeLog(writer, logMsg.Time.Format(logConfig.DatePattern), Levels[logMsg.Sev],  logMsg.Content.String())
+
+			_, _ = buf.Write(formatTimeToBytes(logMsg.Time, logConfig.DatePattern))
+			_, _ = buf.Write(whiteSpaceBytes)
+			_, _ = buf.Write(LevelsBytes[logMsg.Sev])
+			_, _ = buf.Write(whiteSpaceBytes)
+			_, _ = buf.Write(logMsg.Content.Bytes())
+			_, _ = buf.Write(newLineBytes)
 		}
+		_ = buf.Flush()
 
 	}
-	putLogMessage(logMsg)
 }
 
 func formatTimeToBytes(t time.Time, layout string) []byte {
@@ -297,27 +306,31 @@ func handleLog(l *Logger, logMsg *LogMessage) {
 		details := runtime.FuncForPC(pc)
 		fnNameSplit := strings.Split(details.Name(), "/")
 		logMsg.FnName = fnNameSplit[len(fnNameSplit)-1]
-
 		if l.includeLine {
 			logMsg.Line = no
 		}
 	}
+
 	if logConfig.Async {
 		logMsgChannel <- logMsg
-
 	} else {
-		for _, w := range writers {
-			w.DoLog(logMsg)
-		}
+		doLog(logMsg)
 	}
+}
+
+func doLog(logMsg *LogMessage) {
+	for _, w := range writers {
+		w.DoLog(logMsg)
+	}
+	putLogMessage(logMsg)
 }
 
 func doAsyncLog() {
 
 	for logMsg := range logMsgChannel {
-		for _, w := range writers {
-			w.DoLog(logMsg)
-		}
+
+		doLog(logMsg)
+
 	}
 
 }

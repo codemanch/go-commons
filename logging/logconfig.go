@@ -12,7 +12,7 @@ type LogConfig struct {
 	//QueueSize to indicate the number log routines that can be queued  to use in background
 	//This value is used only if the async value is set to true.
 	//Default value for the number items to be in queue 512
-	QueueSize int `json:"queueSize,omitempty" yaml:"numRoutines,omitempty"`
+	QueueSize int `json:"queue_size,omitempty" yaml:"queueSize,omitempty"`
 	//Date - Defaults to  time.RFC3339 pattern
 	DatePattern string `json:"datePattern,omitempty" yaml:"datePattern,omitempty"`
 	//IncludeFunction will include the calling function name  in the log entries
