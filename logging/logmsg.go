@@ -3,7 +3,7 @@ package logging
 import (
 	"bytes"
 	"fmt"
-	"github.com/appmanch/go-commons/textutils"
+	"go.appmanch.org/commons/textutils"
 	"sync"
 	"time"
 )

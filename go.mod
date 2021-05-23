@@ -1,3 +1,3 @@
-module "github.com/appmanch/go-commons"
+module "go.appmanch.org/commons"
 
 go 1.12
