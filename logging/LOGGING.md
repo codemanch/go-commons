@@ -18,7 +18,7 @@ The simplest example is  as shown below.
     package main
     
     import (
-        "github.com/appmanch/go-commons/logging"
+        "go.appmanch.org/commons/logging"
     )
     
     //logger Package Level Logger
