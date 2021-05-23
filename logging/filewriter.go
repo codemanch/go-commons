@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/appmanch/go-commons/textutils"
+	"go.appmanch.org/commons/textutils"
 )
 
 // FileWriter struct

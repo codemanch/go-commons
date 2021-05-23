@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/appmanch/go-commons/textutils"
+	"go.appmanch.org/commons/textutils"
 )
 
 //value struct to handle variable based values
