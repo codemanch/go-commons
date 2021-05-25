@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"strings"
 
-	"go.appmanch.org/commons/textutils"
+	"go.codemanch.com/commons/textutils"
 )
 
 //var knownTypes map[string][]FieldMeta=make(map[string][]FieldMeta)
