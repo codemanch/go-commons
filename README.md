@@ -9,18 +9,20 @@ Go Commons is a collection of reusable common utilities.
 
 ## Utilities WIP
 *  [Logging](logging/LOGGING.md) 
+*  [Properties](config/PROPERTIES.md)
+*  [Environment Var Support](config/ENVVAR.md)
+
 
 
 ## Current Set of utilities in pipeline
 
 * YAML codec support with validation
 * JSON Codec support with validation
-* Properties Support
-* Environment Var Support
+* Web Framework
 
 
 ## License
-Copyright (c) 2020 Appmanch Pty Ltd .
+Copyright (c) 2021 Nanda Goaplan & go-commons Contributors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
