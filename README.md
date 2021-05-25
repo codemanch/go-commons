@@ -22,7 +22,7 @@ Go Commons is a collection of reusable common utilities.
 
 
 ## License
-Copyright (c) 2021 Nanda Goaplan & go-commons Contributors.
+Copyright (c) 2021 Nanda Gopalan & go-commons Contributors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
