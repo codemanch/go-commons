@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"go.appmanch.org/commons/textutils"
+	"go.codemanch.com/commons/textutils"
 )
 
 //value struct to handle variable based values
@@ -155,7 +155,7 @@ func (p *Properties) GetAsInt64(k string, defaultVal int64) (int64, error) {
 }
 
 //GetAsDecimal Function will return the value as int64 for the specified key.If no value is present for the
-//corresponding key then the default value is returned.In case the value is present and it is not decimal error is thrown.
+//corresponding key then the default value is returned.In case the key is present and it is not decimal error is thrown.
 func (p *Properties) GetAsDecimal(k string, defaultVal float64) (float64, error) {
 	p.RLock()
 	defer p.RUnlock()
@@ -166,7 +166,7 @@ func (p *Properties) GetAsDecimal(k string, defaultVal float64) (float64, error)
 }
 
 //GetAsBool Function will return the value as int64 for the specified key.If no value is present for the
-//corresponding key then the default value is returned.In case the value is present and it is not a bool is thrown.
+//corresponding key then the default value is returned.In case the key is present and it is not a bool is thrown.
 func (p *Properties) GetAsBool(k string, defaultVal bool) (bool, error) {
 	p.RLock()
 	defer p.RUnlock()
