@@ -3,10 +3,11 @@ package codec
 import (
 	"bytes"
 	"errors"
-	"go.appmanch.org/commons/textutils"
 	"io"
 	"reflect"
 	"strings"
+
+	"go.appmanch.org/commons/textutils"
 )
 
 //var knownTypes map[string][]FieldMeta=make(map[string][]FieldMeta)
@@ -194,6 +195,14 @@ func Get() baseCodec {
 	return baseCodec{}
 }
 
+type validationError struct {
+	message string
+}
+
+func (v validationError) Error() string {
+	return v.message
+}
+
 func (d baseCodec) DecodeString(s string, v interface{}) error {
 
 	r := strings.NewReader(s)
@@ -231,5 +240,6 @@ func (d baseCodec) Read(r io.Reader, v interface{}) error {
 }
 
 func (d baseCodec) Write(v interface{}, w io.Writer) error {
+
 	return errors.New("Writer is not implemented in base codec")
 }
